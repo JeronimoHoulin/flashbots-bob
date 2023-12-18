@@ -1,4 +1,4 @@
-import { providers, Wallet } from "ethers";
+import { ethers, providers, Wallet } from "ethers";
 import {
   FlashbotsBundleProvider,
   FlashbotsBundleResolution,
@@ -7,13 +7,15 @@ import {
 const GWEI = 10n ** 9n;
 const ETHER = 10n ** 18n;
 
-const CHAIN_ID = 5; // goerli
-const FLASHBOTS_ENDPOINT = "https://relay-goerli.flashbots.net";
+const CHAIN_ID = 11155111; // sepolia
+const FLASHBOTS_ENDPOINT = "https://relay-sepolia.flashbots.net";
 
 const provider = new providers.JsonRpcProvider({
   // @ts-ignore
   url: process.env.ETH_RPC_URL,
 });
+
+const DEPLOYED_ADRS = "0x9E8680dbBcA1127add812abE209A10E621b385dF"
 
 // @ts-ignore
 const wallet = new Wallet(process.env.PRIVATE_KEY, provider);
@@ -28,22 +30,28 @@ async function main() {
     signer,
     FLASHBOTS_ENDPOINT
   );
+
+  console.log("Started...")
+  const start = Date.now();
+
+  // Use await to get the nonce
+  const nonce = await wallet.getTransactionCount();
+
   provider.on("block", async (block) => {
-    console.log(`block: ${block}`);
 
     const signedTx = await flashbot.signBundle([
       {
         signer: wallet,
         transaction: {
+          nonce: nonce,
           chainId: CHAIN_ID,
-          // EIP 1559 transaction
-          type: 2,
+          type: 2, // EIP 1559 transaction
           value: 0,
           data: "0x",
-          maxFeePerGas: GWEI * 3n,
-          maxPriorityFeePerGas: GWEI * 2n,
+          maxFeePerGas: ethers.BigNumber.from(GWEI).mul(10),
+          maxPriorityFeePerGas: ethers.BigNumber.from(GWEI).mul(2),
           gasLimit: 1000000,
-          to: "0x26C4ca34f722BD8fD23D58f34576d8718c883A80",
+          to: DEPLOYED_ADRS
         },
       },
     ]);
@@ -52,10 +60,10 @@ async function main() {
     const sim = await flashbot.simulate(signedTx, targetBlock);
 
     if ("error" in sim) {
-      console.log(`simulation error: ${sim.error.message}`);
+      //console.log(`simulation error: ${sim.error.message}`);
     } else {
-      // console.log(`simulation success: ${JSON.stringify(sim, null, 2)}`);
-      console.log(`simulation success`);
+      //console.log(`simulation success: ${JSON.stringify(sim, null, 2)}`);
+      //console.log(`simulation success`);
     }
 
     const res = await flashbot.sendRawBundle(signedTx, targetBlock);
@@ -65,13 +73,16 @@ async function main() {
 
     const bundleResolution = await res.wait();
     if (bundleResolution === FlashbotsBundleResolution.BundleIncluded) {
-      console.log(`Congrats, included in ${targetBlock}`);
-      console.log(JSON.stringify(sim, null, 2));
+      console.log(`Txn included in block: ${targetBlock}`);
+      console.log((sim as any)['results'][0]['txHash']);
+      const end = Date.now();
+      const latency = (end - start) / 1000; 
+      console.log(`Latency ${latency} seconds.`);
       process.exit(0);
     } else if (
       bundleResolution === FlashbotsBundleResolution.BlockPassedWithoutInclusion
     ) {
-      console.log(`Not included in ${targetBlock}`);
+      //console.log(`Not included in ${targetBlock}`);
     } else if (
       bundleResolution === FlashbotsBundleResolution.AccountNonceTooHigh
     ) {
