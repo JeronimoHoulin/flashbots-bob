@@ -1,12 +1,12 @@
 import { ethers, providers, Wallet } from "ethers";
 
 const GWEI = 10n ** 9n;
-const CHAIN_ID = 11155111; // sepolia
+const CHAIN_ID = 5; // Goerli
 
 const infuraUrl = process.env.ETH_RPC_URL;
 const provider = new ethers.providers.JsonRpcProvider(infuraUrl);
 
-const DEPLOYED_ADRS = "0x9E8680dbBcA1127add812abE209A10E621b385dF"
+const DEPLOYED_ADRS = "0x26C4ca34f722BD8fD23D58f34576d8718c883A80"
 // @ts-ignore
 const wallet = new Wallet(process.env.PRIVATE_KEY, provider);
 

@@ -7,15 +7,16 @@ import {
 const GWEI = 10n ** 9n;
 const ETHER = 10n ** 18n;
 
-const CHAIN_ID = 11155111; // sepolia
-const FLASHBOTS_ENDPOINT = "https://relay-sepolia.flashbots.net";
+const CHAIN_ID = 5; // Goerli
+const FLASHBOTS_ENDPOINT = "https://relay-goerli.flashbots.net/";
+const DEPLOYED_ADRS = "0x26C4ca34f722BD8fD23D58f34576d8718c883A80"
+
 
 const provider = new providers.JsonRpcProvider({
   // @ts-ignore
   url: process.env.ETH_RPC_URL,
 });
 
-const DEPLOYED_ADRS = "0x9E8680dbBcA1127add812abE209A10E621b385dF"
 
 // @ts-ignore
 const wallet = new Wallet(process.env.PRIVATE_KEY, provider);
